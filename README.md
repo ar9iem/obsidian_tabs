@@ -74,14 +74,6 @@ Want to study the code or tweak the styling parameters yourself?
    npm run dev
    ```
 
-
-
----
-
-## License
-
-This project is licensed under the [MIT License](LICENSE).
-
 ---
 
 ## Funding URL
