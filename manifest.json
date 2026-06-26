@@ -1,8 +1,8 @@
 {
 	"id": "tabify",
 	"name": "Tabify",
-	"version": "1.0.0",
-	"minAppVersion": "1.0.0",
+	"version": "1.0.1",
+	"minAppVersion": "1.0.1",
 	"description": "Create interactive tab structures inside your notes using markdown.",
 	"author": "ar9iem",
 	"authorUrl": "https://obsidian.md",
