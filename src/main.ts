@@ -1,4 +1,5 @@
 import { Plugin, MarkdownPostProcessorContext, MarkdownRenderer, MarkdownRenderChild } from 'obsidian';
+import { MyPluginSettings, DEFAULT_SETTINGS, SampleSettingTab } from './settings'; // Import settings definitions
 
 /**
  * A custom component that manages the asynchronous rendering and lifecycle
@@ -15,13 +16,9 @@ class TabRenderChild extends MarkdownRenderChild {
     }
 
     async onload() {
-        // Clear the initial raw content element to avoid duplication
         this.containerEl.empty();
 
-        // 1. Create a root container wrapper
         const container = this.containerEl.createDiv({ cls: "custom-tabs-container" });
-        
-        // 2. Parse the lines inside your markdown code block
         const lines: string[] = this.source.split("\n");
         const tabTitles: string[] = [];
         const tabContents: string[] = [];
@@ -38,32 +35,27 @@ class TabRenderChild extends MarkdownRenderChild {
         });
         if (tabTitles.length > 0) tabContents.push(currentContent.trim());
 
-        // 3. Render the Tab Headers & Content Panes
         const headerBar = container.createDiv({ cls: "tab-header-bar" });
         const contentArea = container.createDiv({ cls: "tab-content-area" });
 
         for (let index = 0; index < tabTitles.length; index++) {
             const title = tabTitles[index];
             
-            // Header Button
             const tabButton = headerBar.createEl("button", { 
                 text: title, 
                 cls: index === 0 ? "tab-btn active" : "tab-btn" 
             });
             
-            // Content Pane Wrapper
             const tabPane = contentArea.createDiv({ cls: "tab-pane" });
             if (index !== 0) tabPane.style.display = "none";
 
-            // Safely render nested markdown asynchronously
             await MarkdownRenderer.renderMarkdown(
                 tabContents[index] ?? "", 
                 tabPane, 
                 this.sourcePath, 
-                this // Pass the MarkdownRenderChild component to manage nested element lifecycles
+                this
             );
 
-            // Tab switching click listener
             tabButton.addEventListener("click", () => {
                 headerBar.querySelectorAll(".tab-btn").forEach((b: Element) => b.classList.remove("active"));
                 contentArea.querySelectorAll(".tab-pane").forEach((p: Element) => (p as HTMLElement).style.display = "none");
@@ -75,12 +67,20 @@ class TabRenderChild extends MarkdownRenderChild {
     }
 }
 
-export default class ArniemTabsPlugin extends Plugin {
+export default class TabifyPlugin extends Plugin {
+    // 1. Declare the settings property so TypeScript knows it exists
+    settings!: MyPluginSettings;
+
     async onload() {
         console.log("Loading Tabify with robust MarkdownRenderChild lifecycle...");
 
+        // 2. Load your data from disk
+        await this.loadSettings();
+
+        // 3. Add the settings tab UI to Obsidian
+        this.addSettingTab(new SampleSettingTab(this.app, this));
+
         this.registerMarkdownCodeBlockProcessor("tabs", (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
-            // Instantiate the lifecycle child and attach it to the post-processor context
             const tabChild = new TabRenderChild(el, source, ctx.sourcePath ?? "");
             ctx.addChild(tabChild);
         });
@@ -88,5 +88,14 @@ export default class ArniemTabsPlugin extends Plugin {
 
     onunload() {
         console.log("Unloading Tabify...");
+    }
+
+    // 4. Implement the settings lifecycle helpers
+    async loadSettings() {
+        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    }
+
+    async saveSettings() {
+        await this.saveData(this.settings);
     }
 }
